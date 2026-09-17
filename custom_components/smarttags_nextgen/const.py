@@ -5,6 +5,15 @@ DOMAIN = "smarttags_nextgen"
 # Config entry keys
 CONF_JSESSION_ID = "jsession_id"
 CONF_REGION = "region"
+CONF_DEVICE_ID = "device_id"
+CONF_AUTH_METHOD = "auth_method"
+
+AUTH_MANUAL = "manual"
+AUTH_CHROME = "chrome"
+
+# Integration services
+SERVICE_LOCATE = "locate"
+SERVICE_REFRESH = "refresh"
 
 # Available operational regions as documented in Samsung backend servers
 REGION_US_GENERAL = "prd-us"

@@ -28,7 +28,9 @@ UPDATE_INTERVAL = timedelta(minutes=5)
 class SmartTagCoordinator(DataUpdateCoordinator[dict[str, dict[str, Any]]]):
     """Fetch and normalize SmartTag data for Home Assistant entities."""
 
-    def __init__(self, hass: HomeAssistant, jsession_id: str, region: str) -> None:
+    def __init__(
+        self, hass: HomeAssistant, jsession_id: str, region: str, entry_id: str
+    ) -> None:
         super().__init__(
             hass,
             _LOGGER,
@@ -36,8 +38,20 @@ class SmartTagCoordinator(DataUpdateCoordinator[dict[str, dict[str, Any]]]):
             update_interval=UPDATE_INTERVAL,
             always_update=False,
         )
+        self.entry_id = entry_id
         self.api = SmartTagsAPI(async_get_clientsession(hass), jsession_id, region)
         self._refresh_lock = asyncio.Lock()
+
+    def _auth_failed(self, error: SmartTagsAuthenticationError) -> ConfigEntryAuthFailed:
+        """Start HA reauthentication without exposing the session credential."""
+        entry = self.hass.config_entries.async_get_entry(self.entry_id)
+        if entry is not None:
+            # ``async_start_reauth`` is intentionally idempotent when a flow is
+            # already open, and is synchronous despite its async-prefixed name.
+            start_reauth = getattr(entry, "async_start_reauth", None)
+            if callable(start_reauth):
+                start_reauth(self.hass)
+        return ConfigEntryAuthFailed(str(error))
 
     async def async_refresh_device(self, device_id: str) -> None:
         """Request and publish a fresh location for one known SmartTag."""
@@ -47,7 +61,7 @@ class SmartTagCoordinator(DataUpdateCoordinator[dict[str, dict[str, Any]]]):
                 await self.api.refresh_csrf_token()
                 operations = await self.api.set_last_select(device_id)
             except SmartTagsAuthenticationError as err:
-                raise ConfigEntryAuthFailed(str(err)) from err
+                raise self._auth_failed(err) from err
             except SmartTagsConnectionError as err:
                 raise UpdateFailed(str(err)) from err
 
@@ -71,7 +85,7 @@ class SmartTagCoordinator(DataUpdateCoordinator[dict[str, dict[str, Any]]]):
                 await self.api.refresh_csrf_token()
                 devices = await self.api.get_devices()
             except SmartTagsAuthenticationError as err:
-                raise ConfigEntryAuthFailed(str(err)) from err
+                raise self._auth_failed(err) from err
             except SmartTagsConnectionError as err:
                 raise UpdateFailed(str(err)) from err
 
@@ -110,7 +124,7 @@ class SmartTagCoordinator(DataUpdateCoordinator[dict[str, dict[str, Any]]]):
             try:
                 operations = await self.api.set_last_select(device_id)
             except SmartTagsAuthenticationError as err:
-                raise ConfigEntryAuthFailed(str(err)) from err
+                raise self._auth_failed(err) from err
             except SmartTagsConnectionError as err:
                 _LOGGER.warning("Failed to update SmartTag %s: %s", name, err)
                 normalized_data[device_id] = tag_data

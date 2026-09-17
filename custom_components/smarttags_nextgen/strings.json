@@ -56,5 +56,21 @@
         "name": "Locate now"
       }
     }
+  },
+  "services": {
+    "locate": {
+      "name": "Locate SmartTag",
+      "description": "Request a fresh location for one or more SmartTags.",
+      "fields": {
+        "device_id": {
+          "name": "SmartTag device ID",
+          "description": "Optional Samsung SmartTag device ID when no entity target is used."
+        }
+      }
+    },
+    "refresh": {
+      "name": "Refresh SmartTags",
+      "description": "Refresh all SmartThings Find SmartTags now."
+    }
   }
 }

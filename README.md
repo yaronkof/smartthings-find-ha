@@ -41,6 +41,10 @@ The original project was itself created as a spiritual successor to Vedeneb's HA
   - `battery_state`
 - Detects expired Samsung sessions and starts Home Assistant's reauthentication flow.
 - Creates Device Registry entries for SmartTags.
+- Provides `smarttags_nextgen.locate` for an on-demand per-tag location request and
+  `smarttags_nextgen.refresh` to refresh all loaded tags.
+- Provides Home Assistant diagnostics with strict redaction: credentials, device
+  identifiers, names, coordinates, and Samsung response bodies are not exported.
 
 ## Limitations
 
@@ -93,6 +97,20 @@ The integration currently authenticates using the browser session created by the
 6. Find the cookie named **`JSESSIONID`**.
 7. Copy its **value** and paste it into the integration setup form.
 8. Choose the appropriate Samsung region. If none of the predefined regions works for your account, use **Other / Custom** and enter the required `prd-*` value.
+
+### Optional Selenium bootstrap
+
+For a repeatable headed-browser login, install the helper dependency on a machine
+with Chrome:
+
+```bash
+python -m pip install -r tools/requirements.txt
+python tools/get_jsession_id.py
+```
+
+The helper uses a persistent Chrome profile and waits for you to complete Samsung
+login and any MFA/CAPTCHA manually. It then prints the current `JSESSIONID` for
+entry into Home Assistant. It does not bypass Samsung security checks.
 
 ### Security warning
 
@@ -155,6 +173,16 @@ Confirm that:
 - the selected region is correct,
 - the JSESSIONID came from `smartthingsfind.samsung.com`, not another Samsung domain.
 
+### Manual services and diagnostics
+
+Use **Developer Tools → Actions** with `smarttags_nextgen.locate` and target a
+SmartTag tracker or its **Locate now** button. The optional `device_id` field can
+be used for automation when an entity target is not convenient. Use
+`smarttags_nextgen.refresh` to refresh all entries. The integration's Diagnostics
+download is intentionally limited to counts, region, lifecycle status, and
+exception types; it never includes the JSESSIONID, device IDs, coordinates,
+names, or raw Samsung responses.
+
 ### Reporting bugs
 
 Open issues here:
@@ -166,6 +194,14 @@ Before submitting a bug report, remove all JSESSIONID/cookie values and other pr
 ## Contributing
 
 Pull requests and useful bug reports are welcome. Please keep changes focused on the maintained repository (`yaronkof/smartthings-find-ha`).
+
+## Release notes — 0.4.0
+
+- Added integration-level `locate` and `refresh` services.
+- Added strict, privacy-preserving diagnostics.
+- Stored the coordinator as config-entry runtime data and shut it down on unload.
+- Added an optional Selenium headed-Chrome bootstrap helper with a persistent profile for manual Samsung login.
+- Kept Samsung browser-session authentication unchanged; no anti-bot bypasses were added.
 
 ## Release notes — 0.2.0
 
