@@ -1,4 +1,4 @@
-# SmartThings Find NextGen for Home Assistant
+# SmartThings Find HA
 
 A custom Home Assistant integration that exposes Samsung SmartTag locations from **SmartThings Find** as `device_tracker` entities.
 
@@ -12,7 +12,7 @@ This repository is maintained by **[@yaronkof](https://github.com/yaronkof)**.
 The project is based on the original **SmartThings Find NextGen** integration by **[@saarglobin](https://github.com/saarglobin)**:
 
 - Original project: https://github.com/saarglobin/smarttags_nextgen_ha
-- Current maintained repository: https://github.com/yaronkof/smarttags_nextgen_ha
+- Current maintained repository: https://github.com/yaronkof/smartthings-find-ha
 
 The original project was itself created as a spiritual successor to Vedeneb's HA-SmartThings-Find project. Original authors and contributors retain credit for their work. See [NOTICE.md](NOTICE.md) and [LICENSE](LICENSE).
 
@@ -60,12 +60,12 @@ This repository is currently installed as a **custom HACS repository**.
 2. Open the three-dot menu and choose **Custom repositories**.
 3. Add:
 
-   `https://github.com/yaronkof/smarttags_nextgen_ha`
+   `https://github.com/yaronkof/smartthings-find-ha`
 
 4. Select **Integration** as the category.
-5. Find **SmartThings Find NextGen** and install it.
+5. Find **SmartThings Find HA** and install it.
 6. Restart Home Assistant if HACS asks you to.
-7. Go to **Settings → Devices & services → Add integration** and search for **SmartThings Find NextGen**.
+7. Go to **Settings → Devices & services → Add integration** and search for **SmartThings Find HA**.
 
 ### Manual installation
 
@@ -79,7 +79,7 @@ This repository is currently installed as a **custom HACS repository**.
    `config/custom_components/smarttags_nextgen`
 
 3. Restart Home Assistant.
-4. Go to **Settings → Devices & services → Add integration** and search for **SmartThings Find NextGen**.
+4. Go to **Settings → Devices & services → Add integration** and search for **SmartThings Find HA**.
 
 ## Getting the Samsung JSESSIONID
 
@@ -159,13 +159,13 @@ Confirm that:
 
 Open issues here:
 
-https://github.com/yaronkof/smarttags_nextgen_ha/issues
+https://github.com/yaronkof/smartthings-find-ha/issues
 
 Before submitting a bug report, remove all JSESSIONID/cookie values and other private account information from logs and screenshots.
 
 ## Contributing
 
-Pull requests and useful bug reports are welcome. Please keep changes focused on the maintained repository (`yaronkof/smarttags_nextgen_ha`).
+Pull requests and useful bug reports are welcome. Please keep changes focused on the maintained repository (`yaronkof/smartthings-find-ha`).
 
 ## Release notes — 0.2.0
 

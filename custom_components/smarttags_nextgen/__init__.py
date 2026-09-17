@@ -7,7 +7,7 @@ from homeassistant.core import HomeAssistant
 from .const import CONF_JSESSION_ID, CONF_REGION, DOMAIN, REGION_EUROPE
 from .coordinator import SmartTagCoordinator
 
-PLATFORMS = [Platform.DEVICE_TRACKER]
+PLATFORMS = [Platform.DEVICE_TRACKER, Platform.BUTTON]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
@@ -16,7 +16,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     coordinator = SmartTagCoordinator(
         hass,
-        entry.data[CONF_JSESSION_ID],
+        entry.data[CONF_JSESSION_ID].strip(),
         entry.data.get(CONF_REGION, REGION_EUROPE),
     )
     await coordinator.async_config_entry_first_refresh()

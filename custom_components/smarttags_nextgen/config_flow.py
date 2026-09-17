@@ -83,11 +83,15 @@ def _normalize_input(user_input: dict[str, Any]) -> tuple[dict[str, Any] | None,
         else:
             actual_region = custom_region
 
+    jsession_id = str(user_input.get(CONF_JSESSION_ID, "")).strip()
+    if not jsession_id:
+        errors[CONF_JSESSION_ID] = "empty_jsession_id"
+
     if errors:
         return None, errors
 
     return {
-        CONF_JSESSION_ID: str(user_input[CONF_JSESSION_ID]).strip(),
+        CONF_JSESSION_ID: jsession_id,
         CONF_REGION: actual_region,
     }, errors
 
@@ -176,9 +180,17 @@ class SmartTagsConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         if user_input is not None:
             validation_data = {
-                CONF_JSESSION_ID: str(user_input[CONF_JSESSION_ID]).strip(),
+                CONF_JSESSION_ID: str(user_input.get(CONF_JSESSION_ID, "")).strip(),
                 CONF_REGION: current_region,
             }
+            if not validation_data[CONF_JSESSION_ID]:
+                errors[CONF_JSESSION_ID] = "empty_jsession_id"
+                return self.async_show_form(
+                    step_id="reauth_confirm",
+                    data_schema=vol.Schema({vol.Required(CONF_JSESSION_ID): str}),
+                    errors=errors,
+                    description_placeholders={"url": "https://smartthingsfind.samsung.com"},
+                )
             try:
                 await validate_input(self.hass, validation_data)
             except InvalidAuth:
