@@ -8,16 +8,14 @@
       "empty_jsession_id": "Please provide a JSESSIONID",
       "invalid_auth": "The JSESSIONID is invalid or has expired",
       "cannot_connect": "Failed to connect to SmartThings Find",
-      "chrome_auth_failed": "Headed Chrome authentication could not complete. Check that Chrome, ChromeDriver, and a display are available, then try again or use the manual JSESSIONID method.",
       "empty_custom_region": "Please provide a custom region code (for example prd-eu or prd-us)",
       "unknown": "Unexpected error"
     },
     "step": {
       "user": {
         "title": "Samsung SmartTags Setup",
-        "description": "Choose manual cookie entry, or open one normal headed Chrome window with a persistent profile at `{profile}` and complete Samsung login yourself. The browser is never run headless, no stealth/anti-detection flags are used, and authentication is not retried automatically.\n\nFor manual entry, visit [SmartThings Find]({url}) and copy the **JSESSIONID** cookie from browser Developer Tools. Treat it like a password.",
+        "description": "Visit [SmartThings Find]({url}) and sign in with your Samsung account. Open your browser Developer Tools (F12), open the Application/Storage tab, find the cookies for `smartthingsfind.samsung.com`, and copy the value of the **JSESSIONID** cookie. Treat it like a password and do not share it.",
         "data": {
-          "auth_method": "Authentication method",
           "jsession_id": "JSESSIONID",
           "region": "Region",
           "custom_region": "Custom region (only when Other / Custom is selected)"
@@ -25,9 +23,8 @@
       },
       "reauth_confirm": {
         "title": "Reconnect SmartThings Find",
-        "description": "Use manual JSESSIONID entry or one normal headed Chrome session with the persistent profile at `{profile}`. Complete Samsung login yourself; no stealth flags or automatic retry loop is used.",
+        "description": "Visit [SmartThings Find]({url}), sign in again, copy the new **JSESSIONID** cookie from your browser Developer Tools, and enter it below. Treat it like a password.",
         "data": {
-          "auth_method": "Authentication method",
           "jsession_id": "New JSESSIONID"
         }
       }
@@ -36,7 +33,6 @@
   "options": {
     "error": {
       "empty_jsession_id": "Please provide a JSESSIONID",
-      "chrome_auth_failed": "Headed Chrome authentication could not complete. Check that Chrome, ChromeDriver, and a display are available, then try again or use the manual JSESSIONID method.",
       "invalid_auth": "The JSESSIONID is invalid or has expired",
       "cannot_connect": "Failed to connect to SmartThings Find",
       "empty_custom_region": "Please provide a custom region code (for example prd-eu or prd-us)",
@@ -45,9 +41,8 @@
     "step": {
       "init": {
         "title": "Update SmartThings Find connection",
-        "description": "Update the Samsung session or region. You may paste a JSESSIONID or complete one normal headed Chrome login using the persistent profile at `{profile}`. No stealth flags or automatic retries are used.",
+        "description": "To get a new JSESSIONID, visit [SmartThings Find]({url}), sign in, and copy the JSESSIONID cookie from your browser Developer Tools. Treat this value like a password and do not share it.",
         "data": {
-          "auth_method": "Authentication method",
           "jsession_id": "JSESSIONID",
           "region": "Region",
           "custom_region": "Custom region (only when Other / Custom is selected)"

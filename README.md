@@ -40,9 +40,6 @@ The original project was itself created as a spiritual successor to Vedeneb's HA
   - `last_seen`
   - `battery_state`
 - Detects expired Samsung sessions and starts Home Assistant's reauthentication flow.
-- Supports a one-shot headed Selenium/Chrome bootstrap using a persistent profile
-  at `<HA config>/smarttags_nextgen/chrome-profile`; the user completes Samsung
-  login in the visible browser and the existing session is reused safely.
 - Creates Device Registry entries for SmartTags.
 - Creates a diagnostic battery-state sensor for each SmartTag that reports
   Samsung's raw battery value (for example `FULL`, `HIGH`, `MEDIUM`, or `LOW`) and changes its icon accordingly.
@@ -92,21 +89,7 @@ This repository is currently installed as a **custom HACS repository**.
 
 ## Getting the Samsung JSESSIONID
 
-### Optional headed Chrome bootstrap
-
-The setup and reauthentication flows offer **Headed Chrome persistent profile**.
-This launches one ordinary, visible Chrome session with the persistent profile
-`<HA config>/smarttags_nextgen/chrome-profile`. Complete Samsung login manually;
-an existing login in that profile is reused, and the flow reads only the
-`JSESSIONID` cookie for `smartthingsfind.samsung.com`. The browser is closed
-afterward and the profile is retained for the next manual bootstrap.
-
-This requires a usable display, Chrome, and Selenium's normal ChromeDriver
-resolution. It does not use `undetected_chromedriver`, stealth flags,
-fingerprint changes, challenge solving, process killing, or automatic retry
-loops. If headed Chrome is unavailable, use the manual cookie method below.
-
-The integration currently authenticates using the browser session created by the SmartThings Find website.
+The integration authenticates using the browser session created by the SmartThings Find website. Authentication is intentionally manual: the user copies the `JSESSIONID` cookie from Chrome or another browser on their own computer and enters it in Home Assistant.
 
 1. Open https://smartthingsfind.samsung.com/ in a desktop browser.
 2. Sign in to your Samsung account.
@@ -116,20 +99,6 @@ The integration currently authenticates using the browser session created by the
 6. Find the cookie named **`JSESSIONID`**.
 7. Copy its **value** and paste it into the integration setup form.
 8. Choose the appropriate Samsung region. If none of the predefined regions works for your account, use **Other / Custom** and enter the required `prd-*` value.
-
-### Optional Selenium bootstrap
-
-For a repeatable headed-browser login, install the helper dependency on a machine
-with Chrome:
-
-```bash
-python -m pip install -r tools/requirements.txt
-python tools/get_jsession_id.py
-```
-
-The helper uses a persistent Chrome profile and waits for you to complete Samsung
-login and any MFA/CAPTCHA manually. It then prints the current `JSESSIONID` for
-entry into Home Assistant. It does not bypass Samsung security checks.
 
 ### Security warning
 
@@ -217,6 +186,11 @@ Before submitting a bug report, remove all JSESSIONID/cookie values and other pr
 ## Contributing
 
 Pull requests and useful bug reports are welcome. Please keep changes focused on the maintained repository (`yaronkof/smartthings-find-ha`).
+
+## Release notes — 0.6.0
+
+- Removed the headed Chrome/Selenium bootstrap, which is not useful in typical Home Assistant VM/OS installations.
+- Kept authentication simple and manual through the browser `JSESSIONID` cookie.
 
 ## Release notes — 0.5.3
 

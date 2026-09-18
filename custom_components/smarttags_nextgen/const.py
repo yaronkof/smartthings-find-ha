@@ -6,11 +6,6 @@ DOMAIN = "smarttags_nextgen"
 CONF_JSESSION_ID = "jsession_id"
 CONF_REGION = "region"
 CONF_DEVICE_ID = "device_id"
-CONF_AUTH_METHOD = "auth_method"
-
-AUTH_MANUAL = "manual"
-AUTH_CHROME = "chrome"
-
 # Integration services
 SERVICE_LOCATE = "locate"
 SERVICE_REFRESH = "refresh"
