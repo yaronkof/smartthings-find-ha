@@ -187,6 +187,10 @@ Before submitting a bug report, remove all JSESSIONID/cookie values and other pr
 
 Pull requests and useful bug reports are welcome. Please keep changes focused on the maintained repository (`yaronkof/smartthings-find-ha`).
 
+## Release notes — 0.6.1
+
+- Fixed the setup description link after removing the headed Chrome flow.
+
 ## Release notes — 0.6.0
 
 - Removed the headed Chrome/Selenium bootstrap, which is not useful in typical Home Assistant VM/OS installations.
