@@ -44,6 +44,8 @@ The original project was itself created as a spiritual successor to Vedeneb's HA
   at `<HA config>/smarttags_nextgen/chrome-profile`; the user completes Samsung
   login in the visible browser and the existing session is reused safely.
 - Creates Device Registry entries for SmartTags.
+- Creates a diagnostic battery-state sensor for each SmartTag that reports
+  Samsung's raw `HIGH`, `MEDIUM`, or `LOW` value and changes its icon accordingly.
 - Provides `smarttags_nextgen.locate` for an on-demand per-tag location request and
   `smarttags_nextgen.refresh` to refresh all loaded tags.
 - Provides Home Assistant diagnostics with strict redaction: credentials, device
@@ -162,6 +164,10 @@ Typical data includes:
 | `location_type` | Samsung location mode, including `offline` when appropriate |
 | `last_seen` | Samsung-provided GPS timestamp when available |
 | `battery_state` | Raw Samsung battery state such as `HIGH`, `MEDIUM`, or `LOW` |
+
+The battery state is also available as a diagnostic sensor. It intentionally
+reports `HIGH`, `MEDIUM`, or `LOW` instead of an invented percentage, because
+Samsung does not provide a precise battery level for these tags.
 
 A missing fresh location does **not** necessarily mean the tag is currently at the last known coordinates. Check `last_seen` when location freshness matters.
 

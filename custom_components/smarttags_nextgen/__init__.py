@@ -11,7 +11,7 @@ from .const import CONF_JSESSION_ID, CONF_REGION, DOMAIN, REGION_EUROPE
 from .coordinator import SmartTagCoordinator
 from .services import async_setup as async_setup_services
 
-PLATFORMS = [Platform.DEVICE_TRACKER, Platform.BUTTON]
+PLATFORMS = [Platform.DEVICE_TRACKER, Platform.BUTTON, Platform.SENSOR]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
