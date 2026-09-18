@@ -17,7 +17,11 @@ from .api import (
     SmartTagsAuthenticationError,
     SmartTagsConnectionError,
 )
+from .chrome_auth import ChromeAuthError, get_jsession_id_from_chrome
 from .const import (
+    AUTH_CHROME,
+    AUTH_MANUAL,
+    CONF_AUTH_METHOD,
     CONF_JSESSION_ID,
     CONF_REGION,
     DOMAIN,
@@ -28,6 +32,11 @@ from .const import (
 )
 
 _LOGGER = logging.getLogger(__name__)
+
+AUTH_OPTIONS = {
+    AUTH_MANUAL: "Manual JSESSIONID",
+    AUTH_CHROME: "Headed Chrome persistent profile",
+}
 
 REGION_OPTIONS = {
     REGION_EUROPE: "Europe (prd-eu)",
@@ -50,6 +59,10 @@ class CannotConnect(HomeAssistantError):
 
 class InvalidAuth(HomeAssistantError):
     """Raised when the Samsung browser session is invalid."""
+
+
+class ChromeBootstrapFailed(HomeAssistantError):
+    """Raised when the optional manual Chrome bootstrap cannot complete."""
 
 
 async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str, Any]:
@@ -96,8 +109,33 @@ def _normalize_input(user_input: dict[str, Any]) -> tuple[dict[str, Any] | None,
     }, errors
 
 
+async def _normalize_with_auth(
+    hass: HomeAssistant, user_input: dict[str, Any]
+) -> tuple[dict[str, Any] | None, dict[str, str]]:
+    """Resolve either the pasted cookie or one explicit headed Chrome session."""
+    if user_input.get(CONF_AUTH_METHOD, AUTH_MANUAL) == AUTH_CHROME:
+        try:
+            jsession_id = await hass.async_add_executor_job(
+                get_jsession_id_from_chrome,
+                hass.config.path("smarttags_nextgen", "chrome-profile"),
+            )
+        except ChromeAuthError as err:
+            raise ChromeBootstrapFailed from err
+        user_input = {**user_input, CONF_JSESSION_ID: jsession_id}
+    return _normalize_input(user_input)
+
+
+def _description_placeholders(hass: HomeAssistant) -> dict[str, str]:
+    """Provide the stable profile location without exposing cookie contents."""
+    return {
+        "url": "https://smartthingsfind.samsung.com",
+        "profile": hass.config.path("smarttags_nextgen", "chrome-profile"),
+    }
+
+
 def _schema(
     *,
+    auth_method: str = AUTH_MANUAL,
     jsession_id: str = "",
     region: str = REGION_EUROPE,
     custom_region: str = "",
@@ -105,7 +143,8 @@ def _schema(
     """Build the shared setup/reconfigure form schema."""
     return vol.Schema(
         {
-            vol.Required(CONF_JSESSION_ID, default=jsession_id): str,
+            vol.Required(CONF_AUTH_METHOD, default=auth_method): vol.In(AUTH_OPTIONS),
+            vol.Optional(CONF_JSESSION_ID, default=jsession_id): str,
             vol.Required(CONF_REGION, default=region): vol.In(REGION_OPTIONS),
             vol.Optional("custom_region", default=custom_region): str,
         }
@@ -131,7 +170,12 @@ class SmartTagsConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         errors: dict[str, str] = {}
 
         if user_input is not None:
-            validation_data, errors = _normalize_input(user_input)
+            try:
+                validation_data, errors = await _normalize_with_auth(
+                    self.hass, user_input
+                )
+            except ChromeBootstrapFailed:
+                validation_data, errors = None, {"base": "chrome_auth_failed"}
             if validation_data is not None:
                 try:
                     info = await validate_input(self.hass, validation_data)
@@ -150,12 +194,13 @@ class SmartTagsConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return self.async_show_form(
             step_id="user",
             data_schema=_schema(
+                auth_method=(user_input or {}).get(CONF_AUTH_METHOD, AUTH_MANUAL),
                 jsession_id=(user_input or {}).get(CONF_JSESSION_ID, ""),
                 region=(user_input or {}).get(CONF_REGION, REGION_EUROPE),
                 custom_region=(user_input or {}).get("custom_region", ""),
             ),
             errors=errors,
-            description_placeholders={"url": "https://smartthingsfind.samsung.com"},
+            description_placeholders=_description_placeholders(self.hass),
         )
 
     async def async_step_reauth(
@@ -179,17 +224,31 @@ class SmartTagsConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         current_region = entry.data.get(CONF_REGION, REGION_EUROPE)
 
         if user_input is not None:
-            validation_data = {
-                CONF_JSESSION_ID: str(user_input.get(CONF_JSESSION_ID, "")).strip(),
+            try:
+                validation_data, _ = await _normalize_with_auth(
+                    self.hass, {**user_input, CONF_REGION: current_region}
+                )
+            except ChromeBootstrapFailed:
+                validation_data = None
+                errors["base"] = "chrome_auth_failed"
+            validation_data = validation_data or {
+                CONF_JSESSION_ID: "",
                 CONF_REGION: current_region,
             }
             if not validation_data[CONF_JSESSION_ID]:
                 errors[CONF_JSESSION_ID] = "empty_jsession_id"
                 return self.async_show_form(
                     step_id="reauth_confirm",
-                    data_schema=vol.Schema({vol.Required(CONF_JSESSION_ID): str}),
+                    data_schema=vol.Schema(
+                        {
+                            vol.Required(CONF_AUTH_METHOD, default=AUTH_MANUAL): vol.In(
+                                AUTH_OPTIONS
+                            ),
+                            vol.Optional(CONF_JSESSION_ID): str,
+                        }
+                    ),
                     errors=errors,
-                    description_placeholders={"url": "https://smartthingsfind.samsung.com"},
+                    description_placeholders=_description_placeholders(self.hass),
                 )
             try:
                 await validate_input(self.hass, validation_data)
@@ -210,9 +269,16 @@ class SmartTagsConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         return self.async_show_form(
             step_id="reauth_confirm",
-            data_schema=vol.Schema({vol.Required(CONF_JSESSION_ID): str}),
+            data_schema=vol.Schema(
+                {
+                    vol.Required(CONF_AUTH_METHOD, default=AUTH_MANUAL): vol.In(
+                        AUTH_OPTIONS
+                    ),
+                    vol.Optional(CONF_JSESSION_ID): str,
+                }
+            ),
             errors=errors,
-            description_placeholders={"url": "https://smartthingsfind.samsung.com"},
+            description_placeholders=_description_placeholders(self.hass),
         )
 
     @staticmethod
@@ -225,7 +291,7 @@ class SmartTagsConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
 
 class SmartTagsOptionsFlowHandler(config_entries.OptionsFlow):
-    """Allow manual JSESSIONID and region updates."""
+    """Allow manual JSESSIONID, headed Chrome, and region updates."""
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
@@ -234,7 +300,12 @@ class SmartTagsOptionsFlowHandler(config_entries.OptionsFlow):
         errors: dict[str, str] = {}
 
         if user_input is not None:
-            validation_data, errors = _normalize_input(user_input)
+            try:
+                validation_data, errors = await _normalize_with_auth(
+                    self.hass, user_input
+                )
+            except ChromeBootstrapFailed:
+                validation_data, errors = None, {"base": "chrome_auth_failed"}
             if validation_data is not None:
                 try:
                     await validate_input(self.hass, validation_data)
@@ -264,10 +335,11 @@ class SmartTagsOptionsFlowHandler(config_entries.OptionsFlow):
         return self.async_show_form(
             step_id="init",
             data_schema=_schema(
+                auth_method=(user_input or {}).get(CONF_AUTH_METHOD, AUTH_MANUAL),
                 jsession_id=jsession_default,
                 region=region_default,
                 custom_region=custom_region_default,
             ),
             errors=errors,
-            description_placeholders={"url": "https://smartthingsfind.samsung.com"},
+            description_placeholders=_description_placeholders(self.hass),
         )

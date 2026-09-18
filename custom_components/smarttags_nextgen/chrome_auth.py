@@ -74,4 +74,9 @@ def get_jsession_id_from_chrome(
         ) from err
     finally:
         if driver is not None:
-            driver.quit()
+            try:
+                driver.quit()
+            except WebDriverException:
+                # The browser is already outside the authentication flow; do
+                # not mask a useful bootstrap error with teardown noise.
+                pass
