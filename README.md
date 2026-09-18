@@ -1,8 +1,5 @@
 # SmartThings Find HA
 
-> [!WARNING]
-> **EXPERIMENTAL — DO NOT INSTALL.** This repository is a development/test fork and is not the recommended working integration. For the maintained working version, use [SmartThings Find NextGen](https://github.com/yaronkof/smarttags_nextgen_ha).
-
 A custom Home Assistant integration that exposes Samsung SmartTag locations from **SmartThings Find** as `device_tracker` entities.
 
 > [!IMPORTANT]
