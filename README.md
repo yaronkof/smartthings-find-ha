@@ -45,7 +45,7 @@ The original project was itself created as a spiritual successor to Vedeneb's HA
   login in the visible browser and the existing session is reused safely.
 - Creates Device Registry entries for SmartTags.
 - Creates a diagnostic battery-state sensor for each SmartTag that reports
-  Samsung's raw `HIGH`, `MEDIUM`, or `LOW` value and changes its icon accordingly.
+  Samsung's raw battery value (for example `FULL`, `HIGH`, `MEDIUM`, or `LOW`) and changes its icon accordingly.
 - Provides `smarttags_nextgen.locate` for an on-demand per-tag location request and
   `smarttags_nextgen.refresh` to refresh all loaded tags.
 - Provides Home Assistant diagnostics with strict redaction: credentials, device
@@ -166,7 +166,7 @@ Typical data includes:
 | `battery_state` | Raw Samsung battery state such as `HIGH`, `MEDIUM`, or `LOW` |
 
 The battery state is also available as a diagnostic sensor. It intentionally
-reports `HIGH`, `MEDIUM`, or `LOW` instead of an invented percentage, because
+reports Samsung's raw value (such as `FULL`, `HIGH`, `MEDIUM`, or `LOW`) instead of an invented percentage, because
 Samsung does not provide a precise battery level for these tags.
 
 A missing fresh location does **not** necessarily mean the tag is currently at the last known coordinates. Check `last_seen` when location freshness matters.
@@ -217,6 +217,10 @@ Before submitting a bug report, remove all JSESSIONID/cookie values and other pr
 ## Contributing
 
 Pull requests and useful bug reports are welcome. Please keep changes focused on the maintained repository (`yaronkof/smartthings-find-ha`).
+
+## Release notes — 0.5.2
+
+- Added the observed Samsung `FULL` battery state to the battery icon mapping.
 
 ## Release notes — 0.5.1
 

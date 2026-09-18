@@ -17,6 +17,7 @@ from .coordinator import SmartTagCoordinator
 
 
 BATTERY_ICONS = {
+    "FULL": "mdi:battery",
     "HIGH": "mdi:battery-high",
     "MEDIUM": "mdi:battery-medium",
     "LOW": "mdi:battery-low",
