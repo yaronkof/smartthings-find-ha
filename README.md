@@ -218,6 +218,11 @@ Before submitting a bug report, remove all JSESSIONID/cookie values and other pr
 
 Pull requests and useful bug reports are welcome. Please keep changes focused on the maintained repository (`yaronkof/smartthings-find-ha`).
 
+## Release notes — 0.5.1
+
+- Added a diagnostic battery-state sensor for each SmartTag.
+- Reports Samsung's raw `HIGH`, `MEDIUM`, or `LOW` state with a matching icon.
+
 ## Release notes — 0.4.0
 
 - Added integration-level `locate` and `refresh` services.
