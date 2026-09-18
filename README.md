@@ -218,6 +218,10 @@ Before submitting a bug report, remove all JSESSIONID/cookie values and other pr
 
 Pull requests and useful bug reports are welcome. Please keep changes focused on the maintained repository (`yaronkof/smartthings-find-ha`).
 
+## Release notes — 0.5.3
+
+- Added the missing Options-flow error message for headed Chrome failures.
+
 ## Release notes — 0.5.2
 
 - Added the observed Samsung `FULL` battery state to the battery icon mapping.

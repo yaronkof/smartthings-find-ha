@@ -36,6 +36,7 @@
   "options": {
     "error": {
       "empty_jsession_id": "Please provide a JSESSIONID",
+      "chrome_auth_failed": "Headed Chrome authentication could not complete. Check that Chrome, ChromeDriver, and a display are available, then try again or use the manual JSESSIONID method.",
       "invalid_auth": "The JSESSIONID is invalid or has expired",
       "cannot_connect": "Failed to connect to SmartThings Find",
       "empty_custom_region": "Please provide a custom region code (for example prd-eu or prd-us)",
