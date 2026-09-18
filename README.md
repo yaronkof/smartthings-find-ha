@@ -1,5 +1,8 @@
 # SmartThings Find HA
 
+> [!WARNING]
+> **EXPERIMENTAL — DO NOT INSTALL.** This repository is a development/test fork and is not the recommended working integration. For the maintained working version, use [SmartThings Find NextGen](https://github.com/yaronkof/smarttags_nextgen_ha).
+
 A custom Home Assistant integration that exposes Samsung SmartTag locations from **SmartThings Find** as `device_tracker` entities.
 
 > [!IMPORTANT]
@@ -40,6 +43,9 @@ The original project was itself created as a spiritual successor to Vedeneb's HA
   - `last_seen`
   - `battery_state`
 - Detects expired Samsung sessions and starts Home Assistant's reauthentication flow.
+- Supports a one-shot headed Selenium/Chrome bootstrap using a persistent profile
+  at `<HA config>/smarttags_nextgen/chrome-profile`; the user completes Samsung
+  login in the visible browser and the existing session is reused safely.
 - Creates Device Registry entries for SmartTags.
 - Provides `smarttags_nextgen.locate` for an on-demand per-tag location request and
   `smarttags_nextgen.refresh` to refresh all loaded tags.
@@ -86,6 +92,20 @@ This repository is currently installed as a **custom HACS repository**.
 4. Go to **Settings → Devices & services → Add integration** and search for **SmartThings Find HA**.
 
 ## Getting the Samsung JSESSIONID
+
+### Optional headed Chrome bootstrap
+
+The setup and reauthentication flows offer **Headed Chrome persistent profile**.
+This launches one ordinary, visible Chrome session with the persistent profile
+`<HA config>/smarttags_nextgen/chrome-profile`. Complete Samsung login manually;
+an existing login in that profile is reused, and the flow reads only the
+`JSESSIONID` cookie for `smartthingsfind.samsung.com`. The browser is closed
+afterward and the profile is retained for the next manual bootstrap.
+
+This requires a usable display, Chrome, and Selenium's normal ChromeDriver
+resolution. It does not use `undetected_chromedriver`, stealth flags,
+fingerprint changes, challenge solving, process killing, or automatic retry
+loops. If headed Chrome is unavailable, use the manual cookie method below.
 
 The integration currently authenticates using the browser session created by the SmartThings Find website.
 
@@ -199,6 +219,8 @@ Pull requests and useful bug reports are welcome. Please keep changes focused on
 
 - Added integration-level `locate` and `refresh` services.
 - Added strict, privacy-preserving diagnostics.
+- Added optional standard Selenium/Chrome headed persistent-profile bootstrap
+  with manual login and manual fallback.
 - Stored the coordinator as config-entry runtime data and shut it down on unload.
 - Added an optional Selenium headed-Chrome bootstrap helper with a persistent profile for manual Samsung login.
 - Kept Samsung browser-session authentication unchanged; no anti-bot bypasses were added.
