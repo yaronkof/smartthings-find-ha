@@ -187,6 +187,11 @@ Before submitting a bug report, remove all JSESSIONID/cookie values and other pr
 
 Pull requests and useful bug reports are welcome. Please keep changes focused on the maintained repository (`yaronkof/smartthings-find-ha`).
 
+## Release notes — 0.6.2
+
+- Fixed Home Assistant translation validation by supplying the SmartThings Find URL through a description placeholder.
+- Added the config-entry-only schema expected by Home Assistant validation.
+
 ## Release notes — 0.6.1
 
 - Fixed the setup description link after removing the headed Chrome flow.

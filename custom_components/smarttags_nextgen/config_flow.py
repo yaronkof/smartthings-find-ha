@@ -93,6 +93,11 @@ def _normalize_input(
     }, errors
 
 
+def _description_placeholders() -> dict[str, str]:
+    """Provide URLs used by the translated setup instructions."""
+    return {"url": "https://smartthingsfind.samsung.com"}
+
+
 def _schema(
     *,
     jsession_id: str = "",
@@ -152,6 +157,7 @@ class SmartTagsConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 custom_region=(user_input or {}).get("custom_region", ""),
             ),
             errors=errors,
+            description_placeholders=_description_placeholders(),
         )
 
     async def async_step_reauth(
@@ -206,6 +212,7 @@ class SmartTagsConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 {vol.Required(CONF_JSESSION_ID): str}
             ),
             errors=errors,
+            description_placeholders=_description_placeholders(),
         )
 
     @staticmethod
@@ -262,4 +269,5 @@ class SmartTagsOptionsFlowHandler(config_entries.OptionsFlow):
                 custom_region=custom_region_default,
             ),
             errors=errors,
+            description_placeholders=_description_placeholders(),
         )

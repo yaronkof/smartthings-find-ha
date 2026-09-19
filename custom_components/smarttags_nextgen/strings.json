@@ -14,7 +14,7 @@
     "step": {
       "user": {
         "title": "Samsung SmartTags Setup",
-        "description": "Visit [SmartThings Find](https://smartthingsfind.samsung.com) and sign in with your Samsung account. Open your browser Developer Tools (F12), open the Application/Storage tab, find the cookies for `smartthingsfind.samsung.com`, and copy the value of the **JSESSIONID** cookie. Treat it like a password and do not share it.",
+        "description": "Visit [SmartThings Find]({url}) and sign in with your Samsung account. Open your browser Developer Tools (F12), open the Application/Storage tab, find the cookies for `smartthingsfind.samsung.com`, and copy the value of the **JSESSIONID** cookie. Treat it like a password and do not share it.",
         "data": {
           "jsession_id": "JSESSIONID",
           "region": "Region",
@@ -23,7 +23,7 @@
       },
       "reauth_confirm": {
         "title": "Reconnect SmartThings Find",
-        "description": "Visit [SmartThings Find](https://smartthingsfind.samsung.com), sign in again, copy the new **JSESSIONID** cookie from your browser Developer Tools, and enter it below. Treat it like a password.",
+        "description": "Visit [SmartThings Find]({url}), sign in again, copy the new **JSESSIONID** cookie from your browser Developer Tools, and enter it below. Treat it like a password.",
         "data": {
           "jsession_id": "New JSESSIONID"
         }
@@ -41,7 +41,7 @@
     "step": {
       "init": {
         "title": "Update SmartThings Find connection",
-        "description": "To get a new JSESSIONID, visit [SmartThings Find](https://smartthingsfind.samsung.com), sign in, and copy the JSESSIONID cookie from your browser Developer Tools. Treat this value like a password and do not share it.",
+        "description": "To get a new JSESSIONID, visit [SmartThings Find]({url}), sign in, and copy the JSESSIONID cookie from your browser Developer Tools. Treat this value like a password and do not share it.",
         "data": {
           "jsession_id": "JSESSIONID",
           "region": "Region",

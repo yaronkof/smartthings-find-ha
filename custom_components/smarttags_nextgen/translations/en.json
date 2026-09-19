@@ -14,7 +14,7 @@
     "step": {
       "user": {
         "title": "Samsung SmartTags Setup",
-        "description": "Visit [SmartThings Find](https://smartthingsfind.samsung.com) and sign in with your Samsung account.\n\n1. Open your browser Developer Tools (F12).\n2. Open the Application/Storage tab.\n3. Find the cookies for `smartthingsfind.samsung.com`.\n4. Copy the value of the **JSESSIONID** cookie.\n\nThe JSESSIONID is a sensitive session credential. Do not share it or post it in logs/issues.",
+        "description": "Visit [SmartThings Find]({url}) and sign in with your Samsung account.\n\n1. Open your browser Developer Tools (F12).\n2. Open the Application/Storage tab.\n3. Find the cookies for `smartthingsfind.samsung.com`.\n4. Copy the value of the **JSESSIONID** cookie.\n\nThe JSESSIONID is a sensitive session credential. Do not share it or post it in logs/issues.",
         "data": {
           "jsession_id": "JSESSIONID",
           "region": "Region",
@@ -23,7 +23,7 @@
       },
       "reauth_confirm": {
         "title": "Reconnect SmartThings Find",
-        "description": "Your Samsung SmartThings Find session has expired. Visit [SmartThings Find](https://smartthingsfind.samsung.com), sign in again, copy the new **JSESSIONID** cookie, and enter it below.",
+        "description": "Your Samsung SmartThings Find session has expired. Visit [SmartThings Find]({url}), sign in again, copy the new **JSESSIONID** cookie, and enter it below.",
         "data": {
           "jsession_id": "New JSESSIONID"
         }
@@ -41,7 +41,7 @@
     "step": {
       "init": {
         "title": "Update SmartThings Find connection",
-        "description": "Update the Samsung session or region used by the integration. To get a new JSESSIONID, visit [SmartThings Find](https://smartthingsfind.samsung.com), sign in, then copy the JSESSIONID cookie from your browser Developer Tools.\n\nTreat this value like a password and do not share it.",
+        "description": "Update the Samsung session or region used by the integration. To get a new JSESSIONID, visit [SmartThings Find]({url}), sign in, then copy the JSESSIONID cookie from your browser Developer Tools.\n\nTreat this value like a password and do not share it.",
         "data": {
           "jsession_id": "JSESSIONID",
           "region": "Region",
