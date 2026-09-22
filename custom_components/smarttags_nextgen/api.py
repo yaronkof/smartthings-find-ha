@@ -38,11 +38,18 @@ class SmartTagsAPI:
         """Build the browser-like headers required by the SmartThings Find web API."""
         return {
             "accept": "application/json, text/plain, */*",
-            "accept-language": "en-US,en;q=0.9",
+            "accept-language": "en-US,en;q=0.9,he;q=0.8,ja;q=0.7",
             "Cookie": f"JSESSIONID={self.jsession_id}",
             "origin": BASE_URL,
+            "priority": "u=1, i",
             "referer": f"{BASE_URL}/",
-            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/148 Safari/537.36",
+            "sec-ch-ua": '"Chromium";v="148", "Google Chrome";v="148", "Not/A)Brand";v="99"',
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": '"Windows"',
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "same-origin",
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36",
             "x-fmm-origin": self.region,
             # Samsung currently also expects this misspelled header on some regions.
             "x-fmm-orgin": self.region,
@@ -116,6 +123,16 @@ class SmartTagsAPI:
                     "X-CSRF-TOKEN"
                 )
                 if not csrf:
+                    # Never log the cookie or response body; header names and status
+                    # are enough to diagnose region/session mismatches.
+                    _LOGGER.warning(
+                        "SmartThings Find authentication response did not include a CSRF token: "
+                        "status=%s region=%s content_type=%s response_headers=%s",
+                        response.status,
+                        self.region,
+                        response.headers.get("Content-Type"),
+                        sorted(response.headers.keys()),
+                    )
                     # chkLogin commonly returns a normal response without a CSRF header
                     # when the browser session has expired.
                     raise SmartTagsAuthenticationError(
