@@ -40,27 +40,47 @@ class SmartTagsAPI:
         self.region = region
         self.csrf_token: str | None = None
         self._use_correct_origin_header = False
+        self._browser_compat_mode = False
 
     @property
     def headers(self) -> dict[str, str]:
         """Build the browser-like headers required by the SmartThings Find web API."""
         headers = {
             "accept": "application/json, text/plain, */*",
-            "accept-language": "en-US,en;q=0.9,he;q=0.8,ja;q=0.7",
+            "accept-language": (
+                "en-GB,en;q=0.9"
+                if self._browser_compat_mode
+                else "en-US,en;q=0.9,he;q=0.8,ja;q=0.7"
+            ),
             "Cookie": self.cookie_header or f"JSESSIONID={self.jsession_id}",
             "origin": BASE_URL,
             "priority": "u=1, i",
             "referer": f"{BASE_URL}/",
-            "sec-ch-ua": '"Chromium";v="148", "Google Chrome";v="148", "Not/A)Brand";v="99"',
-            "sec-ch-ua-mobile": "?0",
-            "sec-ch-ua-platform": '"Windows"',
             "sec-fetch-dest": "empty",
             "sec-fetch-mode": "cors",
             "sec-fetch-site": "same-origin",
-            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36",
-            # Samsung's website currently sends this misspelled header.
-            "x-fmm-orgin": self.region,
+            "user-agent": (
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) "
+                "Gecko/20100101 Firefox/156.0"
+                if self._browser_compat_mode
+                else "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36"
+            ),
+            # The legacy path sends Samsung's misspelled request header. In
+            # browser-compatible mode the browser sends neither spelling; the
+            # x-fmm-orgin value seen in DevTools is a response header.
+            **(
+                {}
+                if self._browser_compat_mode
+                else {"x-fmm-orgin": self.region}
+            ),
         }
+        if not self._browser_compat_mode:
+            headers.update({
+                "sec-ch-ua": '"Chromium";v="148", "Google Chrome";v="148", "Not/A)Brand";v="99"',
+                "sec-ch-ua-mobile": "?0",
+                "sec-ch-ua-platform": '"Windows"',
+            })
         if self._use_correct_origin_header:
             # Compatibility fallback for older/server variants that expect the
             # correctly-spelled header as well.
@@ -120,8 +140,13 @@ class SmartTagsAPI:
         """Fetch and store a fresh CSRF token with a compatible header fallback."""
         try:
             response_details: tuple[int, str | None, list[str]] | None = None
-            for use_correct_header in (False, True):
+            for use_correct_header, browser_compat_mode in (
+                (False, False),
+                (True, False),
+                (False, True),
+            ):
                 self._use_correct_origin_header = use_correct_header
+                self._browser_compat_mode = browser_compat_mode
                 async with self.session.get(
                     f"{BASE_URL}/chkLogin.do", headers=self.headers
                 ) as response:
@@ -146,7 +171,7 @@ class SmartTagsAPI:
                         response.headers.get("Content-Type"),
                         sorted(response.headers.keys()),
                     )
-                    if not use_correct_header:
+                    if not browser_compat_mode:
                         continue
 
             # Never log the cookie or response body; header names and status are
