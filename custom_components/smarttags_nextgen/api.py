@@ -32,11 +32,12 @@ class SmartTagsAPI:
         self.jsession_id = jsession_id
         self.region = region
         self.csrf_token: str | None = None
+        self._use_correct_origin_header = False
 
     @property
     def headers(self) -> dict[str, str]:
         """Build the browser-like headers required by the SmartThings Find web API."""
-        return {
+        headers = {
             "accept": "application/json, text/plain, */*",
             "accept-language": "en-US,en;q=0.9,he;q=0.8,ja;q=0.7",
             "Cookie": f"JSESSIONID={self.jsession_id}",
@@ -50,11 +51,14 @@ class SmartTagsAPI:
             "sec-fetch-mode": "cors",
             "sec-fetch-site": "same-origin",
             "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36",
-            # Samsung's website currently sends this misspelled header. Sending
-            # the correctly-spelled variant as well can change the response and
-            # prevent chkLogin.do from returning the CSRF header.
+            # Samsung's website currently sends this misspelled header.
             "x-fmm-orgin": self.region,
         }
+        if self._use_correct_origin_header:
+            # Compatibility fallback for older/server variants that expect the
+            # correctly-spelled header as well.
+            headers["x-fmm-origin"] = self.region
+        return headers
 
     async def _request_json(
         self,
@@ -106,42 +110,54 @@ class SmartTagsAPI:
             ) from err
 
     async def refresh_csrf_token(self) -> str:
-        """Fetch and store a fresh CSRF token."""
+        """Fetch and store a fresh CSRF token with a compatible header fallback."""
         try:
-            async with self.session.get(
-                f"{BASE_URL}/chkLogin.do", headers=self.headers
-            ) as response:
-                if response.status in (401, 403):
-                    raise SmartTagsAuthenticationError(
-                        "Samsung rejected the current JSESSIONID"
-                    )
-                if response.status >= 400:
-                    raise SmartTagsConnectionError(
-                        f"Samsung returned HTTP {response.status} while refreshing authentication"
-                    )
+            response_details: tuple[int, str | None, list[str]] | None = None
+            for use_correct_header in (False, True):
+                self._use_correct_origin_header = use_correct_header
+                async with self.session.get(
+                    f"{BASE_URL}/chkLogin.do", headers=self.headers
+                ) as response:
+                    if response.status in (401, 403):
+                        raise SmartTagsAuthenticationError(
+                            "Samsung rejected the current JSESSIONID"
+                        )
+                    if response.status >= 400:
+                        raise SmartTagsConnectionError(
+                            f"Samsung returned HTTP {response.status} while refreshing authentication"
+                        )
 
-                csrf = response.headers.get("_csrf") or response.headers.get(
-                    "X-CSRF-TOKEN"
-                )
-                if not csrf:
-                    # Never log the cookie or response body; header names and status
-                    # are enough to diagnose region/session mismatches.
-                    _LOGGER.warning(
-                        "SmartThings Find authentication response did not include a CSRF token: "
-                        "status=%s region=%s content_type=%s response_headers=%s",
+                    csrf = response.headers.get("_csrf") or response.headers.get(
+                        "X-CSRF-TOKEN"
+                    )
+                    if csrf:
+                        self.csrf_token = csrf
+                        return csrf
+
+                    response_details = (
                         response.status,
-                        self.region,
                         response.headers.get("Content-Type"),
                         sorted(response.headers.keys()),
                     )
-                    # chkLogin commonly returns a normal response without a CSRF header
-                    # when the browser session has expired.
-                    raise SmartTagsAuthenticationError(
-                        "Samsung session is invalid or expired"
-                    )
+                    if not use_correct_header:
+                        continue
 
-                self.csrf_token = csrf
-                return csrf
+            # Never log the cookie or response body; header names and status are
+            # enough to diagnose region/session mismatches.
+            status, content_type, response_headers = response_details or (
+                0,
+                None,
+                [],
+            )
+            _LOGGER.warning(
+                "SmartThings Find authentication response did not include a CSRF token: "
+                "status=%s region=%s content_type=%s response_headers=%s",
+                status,
+                self.region,
+                content_type,
+                response_headers,
+            )
+            raise SmartTagsAuthenticationError("Samsung session is invalid or expired")
         except SmartTagsAPIError:
             raise
         except (aiohttp.ClientError, TimeoutError) as err:
