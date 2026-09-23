@@ -29,7 +29,12 @@ class SmartTagCoordinator(DataUpdateCoordinator[dict[str, dict[str, Any]]]):
     """Fetch and normalize SmartTag data for Home Assistant entities."""
 
     def __init__(
-        self, hass: HomeAssistant, jsession_id: str, region: str, entry_id: str
+        self,
+        hass: HomeAssistant,
+        jsession_id: str,
+        region: str,
+        entry_id: str,
+        cookie_header: str | None = None,
     ) -> None:
         super().__init__(
             hass,
@@ -39,7 +44,12 @@ class SmartTagCoordinator(DataUpdateCoordinator[dict[str, dict[str, Any]]]):
             always_update=False,
         )
         self.entry_id = entry_id
-        self.api = SmartTagsAPI(async_get_clientsession(hass), jsession_id, region)
+        self.api = SmartTagsAPI(
+            async_get_clientsession(hass),
+            jsession_id,
+            region,
+            cookie_header,
+        )
         self._refresh_lock = asyncio.Lock()
 
     def _auth_failed(self, error: SmartTagsAuthenticationError) -> ConfigEntryAuthFailed:

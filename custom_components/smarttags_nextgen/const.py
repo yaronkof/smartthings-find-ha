@@ -4,6 +4,7 @@ DOMAIN = "smarttags_nextgen"
 
 # Config entry keys
 CONF_JSESSION_ID = "jsession_id"
+CONF_COOKIE_HEADER = "cookie_header"
 CONF_REGION = "region"
 CONF_DEVICE_ID = "device_id"
 # Integration services

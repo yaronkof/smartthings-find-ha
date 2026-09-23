@@ -27,9 +27,16 @@ class SmartTagsConnectionError(SmartTagsAPIError):
 class SmartTagsAPI:
     """Small async client for the SmartThings Find web endpoints used by the integration."""
 
-    def __init__(self, session: aiohttp.ClientSession, jsession_id: str, region: str) -> None:
+    def __init__(
+        self,
+        session: aiohttp.ClientSession,
+        jsession_id: str,
+        region: str,
+        cookie_header: str | None = None,
+    ) -> None:
         self.session = session
         self.jsession_id = jsession_id
+        self.cookie_header = cookie_header.strip() if cookie_header else None
         self.region = region
         self.csrf_token: str | None = None
         self._use_correct_origin_header = False
@@ -40,7 +47,7 @@ class SmartTagsAPI:
         headers = {
             "accept": "application/json, text/plain, */*",
             "accept-language": "en-US,en;q=0.9,he;q=0.8,ja;q=0.7",
-            "Cookie": f"JSESSIONID={self.jsession_id}",
+            "Cookie": self.cookie_header or f"JSESSIONID={self.jsession_id}",
             "origin": BASE_URL,
             "priority": "u=1, i",
             "referer": f"{BASE_URL}/",

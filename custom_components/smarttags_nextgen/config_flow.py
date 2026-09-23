@@ -18,6 +18,7 @@ from .api import (
     SmartTagsConnectionError,
 )
 from .const import (
+    CONF_COOKIE_HEADER,
     CONF_JSESSION_ID,
     CONF_REGION,
     DOMAIN,
@@ -53,6 +54,7 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
         async_get_clientsession(hass),
         data[CONF_JSESSION_ID],
         data[CONF_REGION],
+        data.get(CONF_COOKIE_HEADER),
     )
     try:
         await api.refresh_csrf_token()
@@ -87,10 +89,14 @@ def _normalize_input(
     if errors:
         return None, errors
 
-    return {
+    normalized = {
         CONF_JSESSION_ID: jsession_id,
         CONF_REGION: actual_region,
-    }, errors
+    }
+    cookie_header = str(user_input.get(CONF_COOKIE_HEADER, "")).strip()
+    if cookie_header:
+        normalized[CONF_COOKIE_HEADER] = cookie_header
+    return normalized, errors
 
 
 def _description_placeholders() -> dict[str, str]:
@@ -103,15 +109,20 @@ def _schema(
     jsession_id: str = "",
     region: str = REGION_EUROPE,
     custom_region: str = "",
+    cookie_header: str = "",
+    include_cookie_header: bool = False,
 ) -> vol.Schema:
     """Build the manual JSESSIONID setup form schema."""
-    return vol.Schema(
-        {
+    fields: dict[Any, Any] = {
             vol.Required(CONF_JSESSION_ID, default=jsession_id): str,
             vol.Required(CONF_REGION, default=region): vol.In(REGION_OPTIONS),
             vol.Optional("custom_region", default=custom_region): str,
-        }
-    )
+    }
+    if include_cookie_header:
+        fields[vol.Required(CONF_COOKIE_HEADER, default=cookie_header)] = str
+    else:
+        fields[vol.Optional("advanced", default=False)] = bool
+    return vol.Schema(fields)
 
 
 def _region_defaults(stored_region: str) -> tuple[str, str]:
@@ -133,6 +144,9 @@ class SmartTagsConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         errors: dict[str, str] = {}
 
         if user_input is not None:
+            if user_input.get("advanced"):
+                self._advanced_user_input = user_input
+                return await self.async_step_user_advanced()
             validation_data, errors = _normalize_input(user_input)
             if validation_data is not None:
                 try:
@@ -160,6 +174,46 @@ class SmartTagsConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             description_placeholders=_description_placeholders(),
         )
 
+    async def async_step_user_advanced(
+        self, user_input: dict[str, Any] | None = None
+    ) -> config_entries.ConfigFlowResult:
+        """Handle the optional full browser Cookie header."""
+        base_input = getattr(self, "_advanced_user_input", {})
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            merged_input = {**base_input, **user_input}
+            validation_data, errors = _normalize_input(merged_input)
+            if validation_data is not None and not validation_data.get(CONF_COOKIE_HEADER):
+                errors[CONF_COOKIE_HEADER] = "empty_cookie_header"
+                validation_data = None
+            if validation_data is not None:
+                try:
+                    info = await validate_input(self.hass, validation_data)
+                except InvalidAuth:
+                    errors["base"] = "invalid_auth"
+                except CannotConnect:
+                    errors["base"] = "cannot_connect"
+                except Exception:  # noqa: BLE001
+                    _LOGGER.exception("Unexpected error validating advanced SmartThings Find")
+                    errors["base"] = "unknown"
+                else:
+                    return self.async_create_entry(
+                        title=info["title"], data=validation_data
+                    )
+
+        return self.async_show_form(
+            step_id="user_advanced",
+            data_schema=_schema(
+                jsession_id=base_input.get(CONF_JSESSION_ID, ""),
+                region=base_input.get(CONF_REGION, REGION_EUROPE),
+                custom_region=base_input.get("custom_region", ""),
+                cookie_header=(user_input or {}).get(CONF_COOKIE_HEADER, ""),
+                include_cookie_header=True,
+            ),
+            errors=errors,
+            description_placeholders=_description_placeholders(),
+        )
+
     async def async_step_reauth(
         self, entry_data: dict[str, Any]
     ) -> config_entries.ConfigFlowResult:
@@ -182,7 +236,14 @@ class SmartTagsConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         if user_input is not None:
             validation_data, normalize_errors = _normalize_input(
-                {**user_input, CONF_REGION: current_region}
+                {
+                    **user_input,
+                    CONF_REGION: current_region,
+                    CONF_COOKIE_HEADER: user_input.get(
+                        CONF_COOKIE_HEADER,
+                        entry.data.get(CONF_COOKIE_HEADER, ""),
+                    ),
+                }
             )
             errors.update(normalize_errors)
             if validation_data is not None:
@@ -201,6 +262,11 @@ class SmartTagsConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         data={
                             **entry.data,
                             CONF_JSESSION_ID: validation_data[CONF_JSESSION_ID],
+                            **(
+                                {CONF_COOKIE_HEADER: validation_data[CONF_COOKIE_HEADER]}
+                                if CONF_COOKIE_HEADER in validation_data
+                                else {}
+                            ),
                         },
                     )
                     await self.hass.config_entries.async_reload(entry.entry_id)
@@ -208,9 +274,13 @@ class SmartTagsConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         return self.async_show_form(
             step_id="reauth_confirm",
-            data_schema=vol.Schema(
-                {vol.Required(CONF_JSESSION_ID): str}
-            ),
+            data_schema=vol.Schema({
+                vol.Required(CONF_JSESSION_ID): str,
+                vol.Optional(
+                    CONF_COOKIE_HEADER,
+                    default=entry.data.get(CONF_COOKIE_HEADER, ""),
+                ): str,
+            }),
             errors=errors,
             description_placeholders=_description_placeholders(),
         )
@@ -234,6 +304,9 @@ class SmartTagsOptionsFlowHandler(config_entries.OptionsFlow):
         errors: dict[str, str] = {}
 
         if user_input is not None:
+            if user_input.get("advanced"):
+                self._advanced_options_input = user_input
+                return await self.async_step_advanced()
             validation_data, errors = _normalize_input(user_input)
             if validation_data is not None:
                 try:
@@ -267,6 +340,51 @@ class SmartTagsOptionsFlowHandler(config_entries.OptionsFlow):
                 jsession_id=jsession_default,
                 region=region_default,
                 custom_region=custom_region_default,
+                cookie_header=(user_input or {}).get(CONF_COOKIE_HEADER, ""),
+            ),
+            errors=errors,
+            description_placeholders=_description_placeholders(),
+        )
+
+    async def async_step_advanced(
+        self, user_input: dict[str, Any] | None = None
+    ) -> config_entries.ConfigFlowResult:
+        """Edit the optional full browser Cookie header."""
+        base_input = getattr(self, "_advanced_options_input", {})
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            merged_input = {**base_input, **user_input}
+            validation_data, errors = _normalize_input(merged_input)
+            if validation_data is not None and not validation_data.get(CONF_COOKIE_HEADER):
+                errors[CONF_COOKIE_HEADER] = "empty_cookie_header"
+                validation_data = None
+            if validation_data is not None:
+                try:
+                    await validate_input(self.hass, validation_data)
+                except InvalidAuth:
+                    errors["base"] = "invalid_auth"
+                except CannotConnect:
+                    errors["base"] = "cannot_connect"
+                except Exception:  # noqa: BLE001
+                    _LOGGER.exception("Unexpected error updating advanced SmartThings Find")
+                    errors["base"] = "unknown"
+                else:
+                    self.hass.config_entries.async_update_entry(
+                        self.config_entry, data=validation_data
+                    )
+                    return self.async_create_entry(title="", data={})
+
+        return self.async_show_form(
+            step_id="advanced",
+            data_schema=_schema(
+                jsession_id=base_input.get(CONF_JSESSION_ID, ""),
+                region=base_input.get(CONF_REGION, REGION_EUROPE),
+                custom_region=base_input.get("custom_region", ""),
+                cookie_header=(user_input or {}).get(
+                    CONF_COOKIE_HEADER,
+                    self.config_entry.data.get(CONF_COOKIE_HEADER, ""),
+                ),
+                include_cookie_header=True,
             ),
             errors=errors,
             description_placeholders=_description_placeholders(),

@@ -8,7 +8,13 @@ from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import config_validation as cv
 
-from .const import CONF_JSESSION_ID, CONF_REGION, DOMAIN, REGION_EUROPE
+from .const import (
+    CONF_COOKIE_HEADER,
+    CONF_JSESSION_ID,
+    CONF_REGION,
+    DOMAIN,
+    REGION_EUROPE,
+)
 from .coordinator import SmartTagCoordinator
 from .services import async_setup as async_setup_services
 
@@ -25,6 +31,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         entry.data[CONF_JSESSION_ID].strip(),
         entry.data.get(CONF_REGION, REGION_EUROPE),
         entry.entry_id,
+        entry.data.get(CONF_COOKIE_HEADER),
     )
     await coordinator.async_config_entry_first_refresh()
 

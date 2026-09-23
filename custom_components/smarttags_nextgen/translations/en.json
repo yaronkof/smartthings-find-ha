@@ -25,7 +25,8 @@
         "title": "Reconnect SmartThings Find",
         "description": "Your Samsung SmartThings Find session has expired. Visit [SmartThings Find]({url}), sign in again, copy the new **JSESSIONID** cookie, and enter it below.",
         "data": {
-          "jsession_id": "New JSESSIONID"
+          "jsession_id": "New JSESSIONID",
+          "cookie_header": "Full browser Cookie header"
         }
       }
     }
@@ -45,7 +46,18 @@
         "data": {
           "jsession_id": "JSESSIONID",
           "region": "Region",
-          "custom_region": "Custom region (only when Other / Custom is selected)"
+          "custom_region": "Custom region (only when Other / Custom is selected)",
+          "advanced": "Advanced mode (use full browser Cookie header)"
+        }
+      },
+      "advanced": {
+        "title": "Advanced SmartThings Find Connection",
+        "description": "Copy the complete Cookie request header from the successful `chkLogin.do` browser request. Treat it like a password and never share it.",
+        "data": {
+          "jsession_id": "JSESSIONID",
+          "region": "Region",
+          "custom_region": "Custom region (only when Other / Custom is selected)",
+          "cookie_header": "Full browser Cookie header"
         }
       }
     }

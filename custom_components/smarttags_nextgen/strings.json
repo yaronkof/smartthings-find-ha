@@ -9,7 +9,8 @@
       "invalid_auth": "The JSESSIONID is invalid or has expired",
       "cannot_connect": "Failed to connect to SmartThings Find",
       "empty_custom_region": "Please provide a custom region code (for example prd-eu or prd-us)",
-      "unknown": "Unexpected error"
+      "unknown": "Unexpected error",
+      "empty_cookie_header": "Please provide the full Cookie header from your browser"
     },
     "step": {
       "user": {
@@ -18,7 +19,8 @@
         "data": {
           "jsession_id": "JSESSIONID",
           "region": "Region",
-          "custom_region": "Custom region (only when Other / Custom is selected)"
+          "custom_region": "Custom region (only when Other / Custom is selected)",
+          "advanced": "Advanced mode (use full browser Cookie header)"
         }
       },
       "reauth_confirm": {
@@ -26,6 +28,16 @@
         "description": "Visit [SmartThings Find]({url}), sign in again, copy the new **JSESSIONID** cookie from your browser Developer Tools, and enter it below. Treat it like a password.",
         "data": {
           "jsession_id": "New JSESSIONID"
+        }
+      },
+      "user_advanced": {
+        "title": "Advanced Samsung SmartTags Setup",
+        "description": "Copy the complete Cookie request header from the successful `chkLogin.do` browser request. Treat it like a password and never share it.",
+        "data": {
+          "jsession_id": "JSESSIONID",
+          "region": "Region",
+          "custom_region": "Custom region (only when Other / Custom is selected)",
+          "cookie_header": "Full browser Cookie header"
         }
       }
     }
@@ -36,7 +48,8 @@
       "invalid_auth": "The JSESSIONID is invalid or has expired",
       "cannot_connect": "Failed to connect to SmartThings Find",
       "empty_custom_region": "Please provide a custom region code (for example prd-eu or prd-us)",
-      "unknown": "Unexpected error"
+      "unknown": "Unexpected error",
+      "empty_cookie_header": "Please provide the full Cookie header from your browser"
     },
     "step": {
       "init": {
