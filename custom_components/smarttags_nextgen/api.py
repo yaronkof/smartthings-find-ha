@@ -50,8 +50,9 @@ class SmartTagsAPI:
             "sec-fetch-mode": "cors",
             "sec-fetch-site": "same-origin",
             "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36",
-            "x-fmm-origin": self.region,
-            # Samsung currently also expects this misspelled header on some regions.
+            # Samsung's website currently sends this misspelled header. Sending
+            # the correctly-spelled variant as well can change the response and
+            # prevent chkLogin.do from returning the CSRF header.
             "x-fmm-orgin": self.region,
         }
 
