@@ -114,7 +114,11 @@ def _schema(
 ) -> vol.Schema:
     """Build the manual JSESSIONID setup form schema."""
     fields: dict[Any, Any] = {
-            vol.Required(CONF_JSESSION_ID, default=jsession_id): str,
+            (
+                vol.Optional(CONF_JSESSION_ID, default=jsession_id)
+                if not include_cookie_header
+                else vol.Required(CONF_JSESSION_ID, default=jsession_id)
+            ): str,
             vol.Required(CONF_REGION, default=region): vol.In(REGION_OPTIONS),
             vol.Optional("custom_region", default=custom_region): str,
     }
