@@ -81,6 +81,9 @@ class SmartTagsAPI:
                 "sec-ch-ua-mobile": "?0",
                 "sec-ch-ua-platform": '"Windows"',
             })
+        else:
+            headers.pop("origin", None)
+            headers.pop("priority", None)
         if self._use_correct_origin_header:
             # Compatibility fallback for older/server variants that expect the
             # correctly-spelled header as well.
