@@ -83,6 +83,13 @@ def _normalize_input(
             actual_region = custom_region
 
     jsession_id = str(user_input.get(CONF_JSESSION_ID, "")).strip()
+    cookie_header = str(user_input.get(CONF_COOKIE_HEADER, "")).strip()
+    if not jsession_id and cookie_header:
+        for cookie in cookie_header.split(";"):
+            name, separator, value = cookie.strip().partition("=")
+            if separator and name.strip().lower() == "jsessionid":
+                jsession_id = value.strip()
+                break
     if not jsession_id:
         errors[CONF_JSESSION_ID] = "empty_jsession_id"
 
@@ -93,7 +100,6 @@ def _normalize_input(
         CONF_JSESSION_ID: jsession_id,
         CONF_REGION: actual_region,
     }
-    cookie_header = str(user_input.get(CONF_COOKIE_HEADER, "")).strip()
     if cookie_header:
         normalized[CONF_COOKIE_HEADER] = cookie_header
     return normalized, errors
@@ -114,16 +120,12 @@ def _schema(
 ) -> vol.Schema:
     """Build the manual JSESSIONID setup form schema."""
     fields: dict[Any, Any] = {
-            (
-                vol.Optional(CONF_JSESSION_ID, default=jsession_id)
-                if not include_cookie_header
-                else vol.Required(CONF_JSESSION_ID, default=jsession_id)
-            ): str,
+            vol.Optional(CONF_JSESSION_ID, default=jsession_id): str,
             vol.Required(CONF_REGION, default=region): vol.In(REGION_OPTIONS),
             vol.Optional("custom_region", default=custom_region): str,
     }
     if include_cookie_header:
-        fields[vol.Required(CONF_COOKIE_HEADER, default=cookie_header)] = str
+        fields[vol.Optional(CONF_COOKIE_HEADER, default=cookie_header)] = str
     else:
         fields[vol.Optional("advanced", default=False)] = bool
     return vol.Schema(fields)
