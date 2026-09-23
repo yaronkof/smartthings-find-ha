@@ -142,16 +142,33 @@ class SmartTagsAPI:
     async def refresh_csrf_token(self) -> str:
         """Fetch and store a fresh CSRF token with a compatible header fallback."""
         try:
-            response_details: tuple[int, str | None, list[str]] | None = None
-            for use_correct_header, browser_compat_mode in (
-                (False, False),
-                (True, False),
-                (False, True),
+            response_details: tuple[
+                str, int, str | None, list[str], list[str], list[str], int
+            ] | None = None
+            for attempt_name, use_correct_header, browser_compat_mode in (
+                ("legacy", False, False),
+                ("correct_origin", True, False),
+                ("browser_compatible", False, True),
             ):
                 self._use_correct_origin_header = use_correct_header
                 self._browser_compat_mode = browser_compat_mode
+                request_headers = self.headers
+                cookie_names = sorted(
+                    name.strip()
+                    for name, separator, _value in (
+                        cookie.partition("=")
+                        for cookie in request_headers.get("Cookie", "").split(";")
+                    )
+                    if separator and name.strip()
+                )
+                _LOGGER.debug(
+                    "SmartThings Find CSRF attempt=%s request_headers=%s cookie_names=%s",
+                    attempt_name,
+                    sorted(request_headers.keys()),
+                    cookie_names,
+                )
                 async with self.session.get(
-                    f"{BASE_URL}/chkLogin.do", headers=self.headers
+                    f"{BASE_URL}/chkLogin.do", headers=request_headers
                 ) as response:
                     if response.status in (401, 403):
                         raise SmartTagsAuthenticationError(
@@ -170,26 +187,53 @@ class SmartTagsAPI:
                         return csrf
 
                     response_details = (
+                        attempt_name,
                         response.status,
                         response.headers.get("Content-Type"),
                         sorted(response.headers.keys()),
+                        sorted(request_headers.keys()),
+                        cookie_names,
+                        len(await response.read()),
                     )
-                    if not browser_compat_mode:
-                        continue
+                    _LOGGER.debug(
+                        "SmartThings Find CSRF attempt=%s returned no token: "
+                        "status=%s content_type=%s body_length=%s",
+                        attempt_name,
+                        response.status,
+                        response.headers.get("Content-Type"),
+                        response_details[-1],
+                    )
 
             # Never log the cookie or response body; header names and status are
             # enough to diagnose region/session mismatches.
-            status, content_type, response_headers = response_details or (
+            (
+                attempt_name,
+                status,
+                content_type,
+                response_headers,
+                request_headers,
+                cookie_names,
+                body_length,
+            ) = response_details or (
+                "none",
                 0,
                 None,
                 [],
+                [],
+                [],
+                0,
             )
             _LOGGER.warning(
                 "SmartThings Find authentication response did not include a CSRF token: "
-                "status=%s region=%s content_type=%s response_headers=%s",
+                "attempt=%s status=%s region=%s content_type=%s body_length=%s "
+                "request_headers=%s cookie_names=%s response_headers=%s",
+                attempt_name,
                 status,
                 self.region,
                 content_type,
+                body_length,
+                request_headers,
+                cookie_names,
                 response_headers,
             )
             raise SmartTagsAuthenticationError("Samsung session is invalid or expired")
