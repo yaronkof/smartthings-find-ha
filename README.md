@@ -100,6 +100,8 @@ The integration authenticates using the browser session created by the SmartThin
 7. Copy its **value** and paste it into the integration setup form.
 8. Choose the appropriate Samsung region. If none of the predefined regions works for your account, use **Other / Custom** and enter the required `prd-*` value.
 
+Normal setup with only the JSESSIONID is recommended. Use **Advanced mode** only if normal setup fails. When using Advanced mode, Chrome or Edge may provide a more compatible Cookie value than Firefox; paste the complete Cookie value from the successful `chkLogin.do` request, without sharing it anywhere.
+
 ### Security warning
 
 Treat the `JSESSIONID` like a password/session token.
@@ -145,6 +147,16 @@ A missing fresh location does **not** necessarily mean the tag is currently at t
 ### Invalid authentication / reauthentication required
 
 The JSESSIONID has probably expired. Sign in to SmartThings Find again and copy a fresh cookie.
+
+If a fresh session still produces a CSRF-token error, use this recovery procedure as a fallback:
+
+1. Remove the integration and its custom HACS repository.
+2. Restart Home Assistant.
+3. Add the custom repository again and reinstall the integration.
+4. Restart Home Assistant again.
+5. Set up the integration again, starting with normal JSESSIONID mode.
+
+This is not normally required for every new JSESSIONID; it is a workaround for stale integration files or cached setup state.
 
 ### Cannot connect
 
