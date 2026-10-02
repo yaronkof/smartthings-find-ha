@@ -241,6 +241,9 @@ class SmartTagsConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         current_region = entry.data.get(CONF_REGION, REGION_EUROPE)
 
         if user_input is not None:
+            if user_input.get("advanced"):
+                self._advanced_reauth_input = user_input
+                return await self.async_step_reauth_advanced()
             validation_data, normalize_errors = _normalize_input(
                 {
                     **user_input,
@@ -281,12 +284,54 @@ class SmartTagsConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return self.async_show_form(
             step_id="reauth_confirm",
             data_schema=vol.Schema({
-                vol.Required(CONF_JSESSION_ID): str,
-                vol.Optional(
-                    CONF_COOKIE_HEADER,
-                    default=entry.data.get(CONF_COOKIE_HEADER, ""),
-                ): str,
+                vol.Optional(CONF_JSESSION_ID): str,
+                vol.Optional("advanced", default=False): bool,
             }),
+            errors=errors,
+            description_placeholders=_description_placeholders(),
+        )
+
+    async def async_step_reauth_advanced(
+        self, user_input: dict[str, Any] | None = None
+    ) -> config_entries.ConfigFlowResult:
+        """Handle reauthentication with the optional full Cookie header."""
+        entry = self._reauth_entry
+        base_input = getattr(self, "_advanced_reauth_input", {})
+        errors: dict[str, str] = {}
+        if entry is None:
+            return self.async_abort(reason="reauth_failed")
+        if user_input is not None:
+            merged_input = {**base_input, **user_input, CONF_REGION: entry.data.get(CONF_REGION, REGION_EUROPE)}
+            validation_data, errors = _normalize_input(merged_input)
+            if validation_data is not None and not validation_data.get(CONF_COOKIE_HEADER):
+                errors[CONF_COOKIE_HEADER] = "empty_cookie_header"
+                validation_data = None
+            if validation_data is not None:
+                try:
+                    await validate_input(self.hass, validation_data)
+                except InvalidAuth:
+                    errors["base"] = "invalid_auth"
+                except CannotConnect:
+                    errors["base"] = "cannot_connect"
+                except Exception:  # noqa: BLE001
+                    _LOGGER.exception("Unexpected error during advanced SmartThings Find reauth")
+                    errors["base"] = "unknown"
+                else:
+                    self.hass.config_entries.async_update_entry(
+                        entry,
+                        data={**entry.data, **validation_data},
+                    )
+                    await self.hass.config_entries.async_reload(entry.entry_id)
+                    return self.async_abort(reason="reauth_successful")
+
+        return self.async_show_form(
+            step_id="reauth_advanced",
+            data_schema=_schema(
+                jsession_id=base_input.get(CONF_JSESSION_ID, ""),
+                region=entry.data.get(CONF_REGION, REGION_EUROPE),
+                cookie_header=(user_input or {}).get(CONF_COOKIE_HEADER, ""),
+                include_cookie_header=True,
+            ),
             errors=errors,
             description_placeholders=_description_placeholders(),
         )

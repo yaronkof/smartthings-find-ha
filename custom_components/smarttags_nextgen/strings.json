@@ -27,12 +27,23 @@
         "title": "Reconnect SmartThings Find",
         "description": "Visit [SmartThings Find]({url}), sign in again, copy the new **JSESSIONID** cookie from your browser Developer Tools, and enter it below. Treat it like a password.",
         "data": {
-          "jsession_id": "New JSESSIONID"
+          "jsession_id": "New JSESSIONID",
+          "advanced": "Advanced mode (use full browser Cookie header)"
         }
       },
       "user_advanced": {
         "title": "Advanced Samsung SmartTags Setup",
         "description": "Copy the complete Cookie request header from the successful `chkLogin.do` browser request. Use Advanced mode only if normal JSESSIONID setup fails. Chrome or Edge may provide a more compatible Cookie value than Firefox. Treat the Cookie header like a password and never share it.",
+        "data": {
+          "jsession_id": "JSESSIONID",
+          "region": "Region",
+          "custom_region": "Custom region (only when Other / Custom is selected)",
+          "cookie_header": "Full browser Cookie header"
+        }
+      },
+      "reauth_advanced": {
+        "title": "Advanced SmartThings Reauthentication",
+        "description": "Copy the complete Cookie request header from the successful `chkLogin.do` browser request. Treat it like a password and never share it.",
         "data": {
           "jsession_id": "JSESSIONID",
           "region": "Region",
